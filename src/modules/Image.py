@@ -27,7 +27,7 @@ class ImagePreprocessor:
         else:
             self.dest_test_dir = dest_test_dir
 
-        self.base_dir = 'INRIAPerson/'
+        self.base_dir = 'dataset/INRIAPerson/'
         self.train_pos_size = (160, 96)
         self.test_pos_size = (134, 70)
         # negative images do not have a determined size, so we don't account for that
@@ -75,7 +75,7 @@ class ImagePreprocessor:
         for (_, _, filenames) in os.walk(os.path.join(path, subdir)):
             files.extend(filenames)
             break
-        files = [file + '\n' for file in files]
+        files = [(file + '\n').encode(encoding='UTF-8') for file in files]
         with open(os.path.join(path, list_name), 'wb') as f:
             f.writelines(files)
 

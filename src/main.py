@@ -1,6 +1,6 @@
 import cv2
 from modules import Channels
-from modules.ImagePreprocessor import ImagePreprocessor
+from modules.Image import ImagePreprocessor
 
 image = cv2.imread("images/person_064.bmp")
 

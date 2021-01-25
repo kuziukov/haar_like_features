@@ -6,6 +6,7 @@ class Templates:
         self._sizes = None
         self._templates = None
         if not shape_model:
+            self._cell_size = 6
             shape_model = np.zeros([20, 10])
             shape_model[2:4, 4:6] = 1
             shape_model[4:11, 2:8] = 2
