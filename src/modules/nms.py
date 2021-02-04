@@ -2,7 +2,6 @@
 import numpy as np
 
 
-# Malisiewicz et al.
 def non_max_suppression(boxes, overlapThresh):
     # if there are no boxes, return an empty list
     if len(boxes) == 0:

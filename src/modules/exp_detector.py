@@ -54,32 +54,24 @@ class Detector:
 		"""
 		
 		candidate_bbs = self._get_bounding_boxes(img_path)
-		bbs = None
-
-		if len(candidate_bbs) > 1:
-			bbs = nms.non_max_suppression(np.asarray(candidate_bbs), overlapThresh=self.nms)
-		elif len(candidate_bbs) == 0:
-			bbs = candidate_bbs
-
+		bbs = nms.non_max_suppression(np.asarray(candidate_bbs), overlapThresh=0.5)
 		return (candidate_bbs, bbs)
 
 	def _get_bounding_boxes(self, img_path, start_h=120, start_w=60):
-		""" 
+		"""
 			Returns 2D array of bounding boxes (M bounding boxes x 5 characteristics per bounding box)
 		"""
-		
+
 		bounding_boxes = []
 
 		img = cv2.imread(img_path)
 		raw_height, raw_width, channels = img.shape
-
 
 		new_height = 200
 		o_img = img
 		img = imutils.resize(img, height=new_height)
 
 		oheight, owidth, channels = img.shape
-
 		win_h, win_w = self.window_size
 
 		#=====[ Collect bounding boxes for each scaling iteration ]=====
@@ -98,19 +90,16 @@ class Detector:
 
 			count = 0
 
-			#=====[ Slide window across entirety of image and calculate bounding box at each step ]=====
 			for y in range(int(y_range)):
 				for x in range(int(x_range)):
 
 					y_pix = y*self.window_step
 					x_pix = x*self.window_step
 
-					#=====[ Score the bounding box ]=====
 					feature_vec = np.asarray(self.fg.generate_features(cfeats[y:y+win_h,x:x+win_w]))
 
 					score = self.clf.predict_proba([feature_vec])[0,1]
 
-					#=====[ Scale and store bounding box ]=====
 					scale = 1/float(self.scaling_factor**it_num) if it_num else 1
 
 					scale *= float(new_height)/raw_height
@@ -118,7 +107,6 @@ class Detector:
 					count += 1
 					if score > 0.5:
 						bounding_boxes.append([score, int(y_pix/scale), int(x_pix/scale), int(win_h/scale), int(win_w/scale)])
-
 
 			print('Processed ', count, ' candidate bounding boxes at scaling iteration ', it_num + 1)
 		return np.matrix(bounding_boxes)

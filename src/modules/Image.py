@@ -52,6 +52,7 @@ class ImagePreprocessor:
             else:
                 dest = path.replace(self.source_test_dir, self.dest_test_dir)
             cv2.imwrite(dest, img)
+            print(dest)
 
     def crop_and_save_neg(self, img_paths, is_train):
         for path in img_paths:

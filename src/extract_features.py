@@ -13,7 +13,7 @@ neg_lst_dir = 'neg.lst'
 file_name = 'resources/features.p'
 template_file = None
 
-feature_number = 100
+feature_number = 1000
 
 
 templates_generator = Templates()

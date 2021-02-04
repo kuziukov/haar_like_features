@@ -151,6 +151,6 @@ class Templates:
         self._normalize_templates()
 
 
-        print(f'Created {len(self._templates)} templates')
+        print('Created {len(self._templates)} templates')
 
         return self._templates

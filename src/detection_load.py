@@ -5,12 +5,13 @@ from modules.exp_detector import Detector
 from utils.draw_bbs import _draw_bbs
 
 save_to_file = 'resources/model'
+load_templates = 'resources/top_templates.p'
 feature_number = 1000
-scaling_factor = 1.05
-scaling_iters = 8
+scaling_factor = 1.2
+scaling_iters = 3
 nms = 0.5
 output_file_prefix = ''
-img_path = 'images/11.png'
+img_path = 'images/crop_000012.png'
 
 # crop_000012.png
 # person_014.png
@@ -19,10 +20,8 @@ img_path = 'images/11.png'
 
 test_classification = pickle.load(open(save_to_file, 'rb'))
 
-templates_generator = Templates()
-templates_generator.generate_sizes()
-
-templates = templates_generator.generate_templates()
+templates = pickle.load(open(load_templates, 'rb'))
+print(templates)
 templates = templates[:feature_number]
 
 feature_generator = Features(templates)
