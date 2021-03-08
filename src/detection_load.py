@@ -4,7 +4,7 @@ from modules import Templates, Features
 from modules.exp_detector import Detector
 from utils.draw_bbs import _draw_bbs
 
-save_to_file = 'resources/model'
+save_to_file = 'resources/model_old'
 load_templates = 'resources/top_templates.p'
 feature_number = 1000
 scaling_factor = 1.2

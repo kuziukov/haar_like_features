@@ -6,7 +6,7 @@ from utils.formulate_stats import _formulate_stats
 from utils.predict import _predict
 
 save_to_file = 'resources/model'
-feature_number = 100
+feature_number = 1000
 
 
 test_classification = pickle.load(open(save_to_file, 'rb'))

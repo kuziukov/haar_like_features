@@ -2,7 +2,7 @@ import pickle
 from modules.Classifier import Classifier
 
 file_name = 'resources/features.p'
-save_to_file = 'resources/model'
+save_to_file = 'resources/model_old'
 
 x = pickle.load(open(file_name,'rb'))
 

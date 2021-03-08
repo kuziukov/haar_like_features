@@ -1,21 +1,24 @@
+import math
+
 import imutils as imutils
 import numpy as np
 import cv2
 
 from modules import Channels, nms
+from utils.draw_bbs import _draw_bbs
 
 
 class Detector:
-	""" 
+    """
 		The Detector class is used to detect pedestrians in images by locating bounding boxes with high probabilities
-		containing a pedestrian 
+		containing a pedestrian
 	"""
 
-	def __init__(self, clf, fg, window_size=(120,60), scaling_factor=1.2, scaling_iters=3, window_step=6, nms=0.5):
-		""" Instantiates the detector class:
-		
+    def __init__(self, clf, fg, window_size=(120, 60), scaling_factor=1.2, scaling_iters=3, window_step=6, nms=0.5):
+        """ Instantiates the detector class:
+
 			Input: weight_indices, weights, window_size, scaling_factor, scaling_iters, window_step
-			
+
 			- weight_indices: the indices of the features that will be used to score a window in the image
 			- weights: the weights used to compute a score for a feature vector associated with a window in the image
 			- fg: FeatureGenerator() object used to generate feature vectors for window in an image
@@ -25,22 +28,22 @@ class Detector:
 			- window_step: the amount of pixels stepped over on each slide of the window
 		"""
 
-		self.clf = clf
-		self.window_size = window_size
-		self.window_step = window_step
+        self.clf = clf
+        self.window_size = window_size
+        self.window_step = window_step
 
-		self.scaling_factor = scaling_factor
-		self.scaling_iters = scaling_iters
+        self.scaling_factor = scaling_factor
+        self.scaling_iters = scaling_iters
 
-		self.cf = Channels()
-		self.fg = fg
-		self.nms = nms
+        self.cf = Channels()
+        self.fg = fg
+        self.nms = nms
 
-	def detect_pedestrians(self, img_path):
-		"""
-			Detects pedestrians in an image.
+    def detect_pedestrians(self, img_path):
+        """
+        Detects pedestrians in an image.
 
-			1) Slides bounding box window over the image
+        	1) Slides bounding box window over the image
 			2) Computes detection score using weights from boosted tree classifier
 			3) Keeps the bounding box if the score is above a certain threshold
 			4) Runs non-maximal suppression (NMS) on bounding boxes
@@ -49,87 +52,86 @@ class Detector:
 
 			- img_path: path to image file
 
-			Output: list of bounding boxes and scores 
+			Output: list of bounding boxes and scores
 
 		"""
-		
-		candidate_bbs = self._get_bounding_boxes(img_path)
-		bbs = nms.non_max_suppression(np.asarray(candidate_bbs), overlapThresh=0.5)
-		return (candidate_bbs, bbs)
 
-	def _get_bounding_boxes(self, img_path, start_h=120, start_w=60):
-		"""
-			Returns 2D array of bounding boxes (M bounding boxes x 5 characteristics per bounding box)
-		"""
+        candidate_bbs = self._get_bounding_boxes(img_path)
+        bbs = nms.non_max_suppression(np.asarray(candidate_bbs), overlapThresh=0.4)
+        return (candidate_bbs, bbs)
 
-		bounding_boxes = []
+    def _get_bounding_boxes(self, img_path, start_h=120, start_w=60):
+        """
+        Returns 2D array of bounding boxes (M bounding boxes x 5 characteristics per bounding box)
+        """
 
-		img = cv2.imread(img_path)
-		raw_height, raw_width, channels = img.shape
+        bounding_boxes = []
+        global_boxes = []
 
-		new_height = 200
-		o_img = img
-		img = imutils.resize(img, height=new_height)
+        img = cv2.imread(img_path)
+        raw_height, raw_width, channels = img.shape
 
-		oheight, owidth, channels = img.shape
-		win_h, win_w = self.window_size
+        new_height = 200
+        o_img = img
+        img = imutils.resize(img, height=new_height)
 
-		#=====[ Collect bounding boxes for each scaling iteration ]=====
-		for it_num in range(self.scaling_iters):
+        oheight, owidth, channels = img.shape
+        win_h, win_w = self.window_size
 
-			#=====[ Scale image if not on first iteration ]=====
-			if it_num > 0:
-				img = cv2.resize(o_img,(int(owidth/float(self.scaling_factor**it_num)), int(oheight/float(self.scaling_factor**it_num))))
+        # =====[ Collect bounding boxes for each scaling iteration ]=====
+        for it_num in range(self.scaling_iters):
 
-			height, width, _ = img.shape
+            print(f"Iteration: {it_num}")
 
-			y_range = (height - win_h)/self.window_step + 1
-			x_range = (width - win_w)/self.window_step + 1
+            # =====[ Scale image if not on first iteration ]=====
+            if it_num > 0:
+                img = cv2.resize(o_img, (int(owidth / float(self.scaling_factor ** it_num)),
+                                         int(oheight / float(self.scaling_factor ** it_num))))
 
-			cfeats = self.cf.compute_channels(img)
+            height, width, _ = img.shape
 
-			count = 0
+            y_range = (height - win_h) / self.window_step + 1
+            x_range = (width - win_w) / self.window_step + 1
 
-			for y in range(int(y_range)):
-				for x in range(int(x_range)):
+            count = 0
 
-					y_pix = y*self.window_step
-					x_pix = x*self.window_step
+            for y in range(math.floor(y_range)):
+                for x in range(math.floor(x_range)):
 
-					feature_vec = np.asarray(self.fg.generate_features(cfeats[y:y+win_h,x:x+win_w]))
+                    y_pix = y * self.window_step
+                    x_pix = x * self.window_step
 
-					score = self.clf.predict_proba([feature_vec])[0,1]
+                    #cv2.imwrite("test.jpeg", img[y_pix: y_pix + win_h,
+                    #                                  x_pix: x_pix + win_w,
+                    #                                  :])
 
-					scale = 1/float(self.scaling_factor**it_num) if it_num else 1
+                    cfeats = self.cf.compute_channels(img[y_pix: y_pix + win_h,
+                                                      x_pix: x_pix + win_w,
+                                                      :])
 
-					scale *= float(new_height)/raw_height
+                    feature_vec = np.asarray(self.fg.generate_features(cfeats))
 
-					count += 1
-					if score > 0.5:
-						bounding_boxes.append([score, int(y_pix/scale), int(x_pix/scale), int(win_h/scale), int(win_w/scale)])
+                    score = self.clf.predict_proba([feature_vec])[0, 1]
 
-			print('Processed ', count, ' candidate bounding boxes at scaling iteration ', it_num + 1)
-		return np.matrix(bounding_boxes)
-	
-	def _calculate_total_iters(self, img):
-		""" Calculates total number of bounding box scores to be calculated """
-		
-		oheight, owidth, channels = img.shape
-		win_h, win_w = self.window_size
-		
-		iters = 0
-		
-		for it_num in range(self.scaling_iters):
+                    scale = 1 / float(self.scaling_factor ** it_num) if it_num else 1
 
-			#=====[ Scale image if not on first iteration ]=====
-			if it_num > 0:
-				img = cv2.resize(img,(int(it_num*self.scaling_factor*owidth), int(it_num*self.scaling_factor*oheight)))
+                    scale *= float(new_height) / raw_height
 
-			height, width, _ = img.shape
+                    count += 1
+                    if score > 0.5:
+                        bounding_boxes.append(
+                            [score,
+                             float(y_pix / scale),
+                             float(x_pix / scale),
+                             float(win_h / scale),
+                             float(win_w / scale)])
 
-			y_range = (height - win_h)/self.window_step + 1
-			x_range = (width - win_w)/self.window_step + 1
-			
-			iters += y_range*x_range
-		
-		return iters
+            bbs = nms.non_max_suppression(np.asarray(bounding_boxes), overlapThresh=0.6)
+            if type(bbs) == list:
+                bounding_boxes = bbs
+            else:
+                bounding_boxes = bbs.tolist()
+
+            print('Processed ', count, ' candidate bounding boxes at scaling iteration ', it_num + 1, 'boxes ',
+                  len(bounding_boxes))
+        return np.matrix(bounding_boxes)

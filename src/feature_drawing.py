@@ -1,7 +1,5 @@
 import pickle
-
 import matplotlib.pyplot as plt
-
 from modules import Templates, Features
 import numpy as np
 
